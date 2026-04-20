@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EverythingszDash</title>
+  <meta name="description" content="Your personal bookmark dashboard — add and launch your favorite websites in one place." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <meta name="theme-color" content="#0b0d14" />
+</head>
+<body>
+
+  <!-- Background blobs -->
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">EverythingszDash</span>
+      </div>
+      <div class="greeting" id="greeting">Good evening</div>
+    </div>
+    <div class="header-right">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search bookmarks… (Ctrl+K)" autocomplete="off" />
+      </div>
+      <button class="btn-add" id="openModalBtn" title="Add new bookmark (Ctrl+N)">
+        <span class="btn-add-icon">+</span>
+        <span>Add Site</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Folder Bar -->
+  <div class="folder-bar" id="folderBar">
+    <!-- Populated by JS -->
+    <button class="folder-pill active" data-id="all">All</button>
+
+    <!-- New Folder inline creator -->
+    <div class="new-folder-wrap" id="newFolderWrap">
+      <button class="new-folder-btn" id="newFolderBtn" title="Create a new folder">
+        <span>＋</span> New Folder
+      </button>
+      <div class="new-folder-form" id="newFolderForm" style="display:none;">
+        <input type="text" id="newFolderEmoji" class="folder-emoji-input" maxlength="2" placeholder="📁" />
+        <input type="text" id="newFolderName" class="folder-name-input" maxlength="24" placeholder="Folder name…" autocomplete="off" />
+        <button class="folder-form-ok" id="newFolderOk">Create</button>
+        <button class="folder-form-cancel" id="newFolderCancel">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main">
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-illustration" id="emptyIllustration">🌐</div>
+      <h2 id="emptyTitle">No bookmarks yet</h2>
+      <p id="emptySubtitle">Click <strong>Add Site</strong> to add your first bookmark and start building your dashboard.</p>
+      <button class="btn-add empty-cta" id="openModalBtnEmpty">+ Add your first site</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid" id="bookmarkGrid"></div>
+  </main>
+
+  <!-- Clock -->
+  <div class="clock-widget">
+    <div class="clock-time" id="clockTime">00:00</div>
+    <div class="clock-date" id="clockDate">Today</div>
+  </div>
+
+  <!-- ── Add / Edit Bookmark Modal ── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModalBtn" aria-label="Close">✕</button>
+      <h2 class="modal-title" id="modalTitle">Add Bookmark</h2>
+
+      <div class="form-group">
+        <label for="siteUrl">Website URL</label>
+        <input type="url" id="siteUrl" placeholder="https://example.com" autocomplete="off" />
+        <span class="hint" id="urlHint"></span>
+      </div>
+
+      <div class="form-group">
+        <label for="siteName">Display Name</label>
+        <input type="text" id="siteName" placeholder="e.g. YouTube" maxlength="30" autocomplete="off" />
+      </div>
+
+      <div class="form-group">
+        <label for="siteDesc">Short Description <span class="optional">(optional)</span></label>
+        <input type="text" id="siteDesc" placeholder="e.g. Watch videos" maxlength="60" autocomplete="off" />
+      </div>
+
+      <!-- Folder picker -->
+      <div class="form-group">
+        <label>Folder <span class="optional">(optional)</span></label>
+        <div class="folder-picker" id="folderPicker">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <div class="form-group color-row">
+        <label>Card Accent</label>
+        <div class="color-swatches" id="colorSwatches"></div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel" id="cancelBtn">Cancel</button>
+        <button class="btn-save" id="saveBtn">Save Bookmark</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Folder Right-Click Menu ── -->
+  <div class="context-menu" id="folderCtxMenu">
+    <button class="ctx-item" id="fcRename">✏️ Rename</button>
+    <button class="ctx-item ctx-danger" id="fcDelete">🗑️ Delete folder</button>
+  </div>
+
+  <!-- ── Card Right-Click Menu ── -->
+  <div class="context-menu" id="cardCtxMenu">
+    <button class="ctx-item" id="ccEdit">✏️ Edit</button>
+    <button class="ctx-item ctx-danger" id="ccDelete">🗑️ Remove</button>
+  </div>
+
+  <!-- ── Rename Folder Modal ── -->
+  <div class="modal-overlay" id="renameFolderOverlay">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+      <button class="modal-close" id="closeRenameFolderBtn">✕</button>
+      <h2 class="modal-title">Rename Folder</h2>
+      <div class="rename-row">
+        <input type="text" id="renameFolderEmoji" class="folder-emoji-input" maxlength="2" />
+        <input type="text" id="renameFolderName" class="folder-name-input-lg" maxlength="24" placeholder="Folder name…" />
+      </div>
+      <div class="form-actions" style="margin-top:20px;">
+        <button class="btn-cancel" id="cancelRenameFolderBtn">Cancel</button>
+        <button class="btn-save" id="saveRenameFolderBtn">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
