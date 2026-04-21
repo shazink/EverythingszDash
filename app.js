@@ -12,6 +12,11 @@ const ACCENTS = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────
+function loadData(key, defaultValue) {
+  // Placeholder implementation
+  return defaultValue;
+}
+
 let bookmarks    = loadData('evd_bookmarks', []);
 let folders      = loadData('evd_folders', []);
 let activeFolderId = 'all';
@@ -644,7 +649,7 @@ function showToast(msg) {
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
       console.log('SW registration failed: ', err);
     });
   });
@@ -683,4 +688,3 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-
