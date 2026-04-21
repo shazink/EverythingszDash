@@ -141,6 +141,13 @@ const grid           = document.getElementById('bookmarkGrid');
 const emptyState     = document.getElementById('emptyState');
 const searchInput    = document.getElementById('searchInput');
 
+// View + font controls
+const viewGridBtn    = document.getElementById('viewGridBtn');
+const viewIconsBtn   = document.getElementById('viewIconsBtn');
+const viewListBtn    = document.getElementById('viewListBtn');
+const fontDecBtn     = document.getElementById('fontDecBtn');
+const fontIncBtn     = document.getElementById('fontIncBtn');
+
 // Add site modal
 const openModalBtn   = document.getElementById('openModalBtn');
 const openModalBtnEmpty = document.getElementById('openModalBtnEmpty');
@@ -190,6 +197,7 @@ const greeting       = document.getElementById('greeting');
 
 
 // ── Init ──────────────────────────────────────────────────────────────────
+initViewAndFont();
 buildSwatches();
 updateGreeting();
 tickClock();
@@ -207,6 +215,50 @@ saveData('evd_bookmarks', bookmarks);
 
 renderFolders();
 render();
+
+function initViewAndFont() {
+  const VIEW_KEY = 'evd_view';
+  const FONT_KEY = 'evd_font_px';
+  const fontSizes = [12, 13, 14, 15, 16];
+
+  let viewMode = loadData(VIEW_KEY, 'grid');
+  if (!['grid', 'icons', 'list'].includes(viewMode)) viewMode = 'grid';
+
+  let fontPx = loadData(FONT_KEY, 14);
+  if (typeof fontPx !== 'number' || Number.isNaN(fontPx) || !fontSizes.includes(fontPx)) fontPx = 14;
+
+  const applyFont = (px) => {
+    document.documentElement.style.setProperty('--base-font-size', `${px}px`);
+    saveData(FONT_KEY, px);
+  };
+
+  const applyView = (mode) => {
+    document.body.dataset.view = mode;
+    saveData(VIEW_KEY, mode);
+
+    if (viewGridBtn) viewGridBtn.classList.toggle('active', mode === 'grid');
+    if (viewIconsBtn) viewIconsBtn.classList.toggle('active', mode === 'icons');
+    if (viewListBtn) viewListBtn.classList.toggle('active', mode === 'list');
+  };
+
+  applyFont(fontPx);
+  applyView(viewMode);
+
+  viewGridBtn?.addEventListener('click', () => applyView('grid'));
+  viewIconsBtn?.addEventListener('click', () => applyView('icons'));
+  viewListBtn?.addEventListener('click', () => applyView('list'));
+
+  fontDecBtn?.addEventListener('click', () => {
+    const idx = fontSizes.indexOf(fontPx);
+    fontPx = fontSizes[Math.max(0, idx - 1)];
+    applyFont(fontPx);
+  });
+  fontIncBtn?.addEventListener('click', () => {
+    const idx = fontSizes.indexOf(fontPx);
+    fontPx = fontSizes[Math.min(fontSizes.length - 1, idx + 1)];
+    applyFont(fontPx);
+  });
+}
 
 // ── Storage ───────────────────────────────────────────────────────────────
 function loadData(key, defaultVal) {
@@ -228,9 +280,11 @@ function updateGreeting() {
 
 function tickClock() {
   const now  = new Date();
-  const hh   = String(now.getHours()).padStart(2, '0');
-  const mm   = String(now.getMinutes()).padStart(2, '0');
-  clockTime.textContent = `${hh}:${mm}`;
+  clockTime.textContent = now.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
   clockDate.textContent = now.toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric'
   });

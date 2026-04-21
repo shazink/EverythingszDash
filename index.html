@@ -34,6 +34,20 @@
         <span class="search-icon">🔍</span>
         <input type="text" id="searchInput" class="search-input" placeholder="Search bookmarks… (Ctrl+K)" autocomplete="off" />
       </div>
+
+      <div class="header-controls">
+        <div class="segmented" role="group" aria-label="View mode">
+          <button class="seg-btn" id="viewGridBtn" type="button" title="Grid view">▦</button>
+          <button class="seg-btn" id="viewIconsBtn" type="button" title="Icon view">⬚</button>
+          <button class="seg-btn" id="viewListBtn" type="button" title="List view">≣</button>
+        </div>
+
+        <div class="segmented" role="group" aria-label="Text size">
+          <button class="seg-btn" id="fontDecBtn" type="button" title="Smaller text">A−</button>
+          <button class="seg-btn" id="fontIncBtn" type="button" title="Larger text">A+</button>
+        </div>
+      </div>
+
       <button class="btn-add" id="openModalBtn" title="Add new bookmark (Ctrl+N)">
         <span class="btn-add-icon">+</span>
         <span>Add Site</span>
