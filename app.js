@@ -1,5 +1,115 @@
 /* ─── EverythingszDash — app.js ──────────────────────────────────────── */
 
+// Render (and similar hosts) may start this repo with `node app.js`.
+// This file is primarily browser code, so when we're in Node we start a tiny
+// static server and avoid touching any DOM globals.
+const __EVD_IS_NODE__ = typeof window === 'undefined' || typeof document === 'undefined';
+
+if (__EVD_IS_NODE__) {
+  const http = require('node:http');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { URL } = require('node:url');
+
+  const ROOT_DIR = __dirname;
+  const PORT = Number.parseInt(process.env.PORT || '3000', 10);
+
+  const MIME_BY_EXT = new Map([
+    ['.html', 'text/html; charset=utf-8'],
+    ['.js', 'application/javascript; charset=utf-8'],
+    ['.css', 'text/css; charset=utf-8'],
+    ['.json', 'application/json; charset=utf-8'],
+    ['.png', 'image/png'],
+    ['.jpg', 'image/jpeg'],
+    ['.jpeg', 'image/jpeg'],
+    ['.svg', 'image/svg+xml'],
+    ['.ico', 'image/x-icon'],
+    ['.txt', 'text/plain; charset=utf-8'],
+    ['.webmanifest', 'application/manifest+json; charset=utf-8'],
+  ]);
+
+  function safeResolve(urlPathname) {
+    const decodedPath = decodeURIComponent(urlPathname);
+    const withoutNulls = decodedPath.replaceAll('\0', '');
+    const normalized = path.posix.normalize(withoutNulls);
+
+    // Remove leading slash so it stays relative to ROOT_DIR.
+    const relative = normalized.replace(/^\/+/, '');
+
+    // Prevent path traversal.
+    if (relative.startsWith('..') || relative.includes('/../')) return null;
+    return path.join(ROOT_DIR, relative);
+  }
+
+  function sendFile(res, filePath) {
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_BY_EXT.get(ext) || 'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', () => {
+      res.statusCode = 500;
+      res.end('Internal Server Error');
+    });
+    stream.pipe(res);
+  }
+
+  const server = http.createServer((req, res) => {
+    if (!req.url) {
+      res.statusCode = 400;
+      res.end('Bad Request');
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const resolvedPath = safeResolve(requestUrl.pathname);
+
+    if (!resolvedPath) {
+      res.statusCode = 403;
+      res.end('Forbidden');
+      return;
+    }
+
+    let filePath = resolvedPath;
+    if (requestUrl.pathname === '/' || requestUrl.pathname === '') {
+      filePath = path.join(ROOT_DIR, 'index.html');
+    }
+
+    // If it exists and is a directory, try an index.html.
+    try {
+      const stat = fs.statSync(filePath);
+      if (stat.isDirectory()) filePath = path.join(filePath, 'index.html');
+    } catch {
+      // ignore; handled below
+    }
+
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      res.statusCode = 200;
+      sendFile(res, filePath);
+      return;
+    }
+
+    // SPA-ish fallback: if the path doesn't look like a file, serve index.html.
+    if (!path.extname(requestUrl.pathname)) {
+      const indexPath = path.join(ROOT_DIR, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.statusCode = 200;
+        sendFile(res, indexPath);
+        return;
+      }
+    }
+
+    res.statusCode = 404;
+    res.end('Not Found');
+  });
+
+  server.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`EverythingszDash listening on port ${PORT}`);
+  });
+} else {
+
 // ── Accent palette ──────────────────────────────────────────────────────
 const ACCENTS = [
   { id: 'purple',  value: 'linear-gradient(135deg,#7c6ffb,#a855f7)' },
@@ -12,11 +122,6 @@ const ACCENTS = [
 ];
 
 // ── State ────────────────────────────────────────────────────────────────
-function loadData(key, defaultValue) {
-  // Placeholder implementation
-  return defaultValue;
-}
-
 let bookmarks    = loadData('evd_bookmarks', []);
 let folders      = loadData('evd_folders', []);
 let activeFolderId = 'all';
@@ -688,3 +793,5 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+}
